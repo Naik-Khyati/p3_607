@@ -1,0 +1,120 @@
+---
+title: 'Project 3 : Most Valued Data Science Skills'
+author: "Team X"
+date: "`r Sys.Date()`"
+---
+
+### Load required packages
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(kableExtra)
+library(RMySQL)
+library(RODBC)
+```
+
+```{r sql_credentials, echo=FALSE}
+#user name and password for sql data base connection
+usr <- 'dum_usr'
+pwd <- 'dum_pwd'
+```
+
+### Connect to MYSQL ds_skills schema
+
+```{r}
+# Connect to sql server
+sql_conn <- dbConnect(MySQL(), user= usr, password = pwd, host='localhost')
+
+# Create schema if does not exist
+
+my_dbname='ds_skills'
+MySQLcode <- paste0("CREATE SCHEMA IF NOT EXISTS ",my_dbname,";",sep="")
+dbSendQuery(sql_conn, MySQLcode)
+
+# Connect to ds_skills schema
+sql_conn <- dbConnect(MySQL(), 
+                user = usr,
+                password = pwd,
+                host = 'localhost',
+                dbname = my_dbname)
+
+# Enable local data loading
+# We may get below error if it is not enabled
+# Loading local data is disabled; this must be enabled on both the client and server sides
+MySQLcode <- "SET GLOBAL local_infile=1;"
+dbSendQuery(sql_conn, MySQLcode)
+```
+
+### Read the data to load into database from github
+
+```{r}
+github_url <- "https://raw.githubusercontent.com/Naik-Khyati/p3_607/main/"
+```
+
+### Load data into database, read data from database and save it in R dataframe
+
+Read the multipleChoiceResponses spreadsheet from github, upload it as a table into ds_dkills schema and than read the data from newly created database table and save it in a R dataframe
+
+```{r}
+file_name <-   "multipleChoiceResponses"
+file_url <- paste0(github_url,file_name,".csv",sep='')
+
+# read file
+mcr_tb = read.csv(file_url,fill = TRUE)
+
+# Drop table if exists
+MySQLcode <- paste0("DROP TABLE IF EXISTS ",file_name,";",sep="")
+dbSendQuery(sql_conn, MySQLcode)
+
+# load the spreadsheet into database
+dbWriteTable(sql_conn,"multipleChoiceResponses",mcr_tb,row.names = FALSE, overwrite = TRUE)
+
+# load the database table into a R dataframe
+multipleChoiceResponses <- dbGetQuery(sql_conn, 'SELECT * FROM multipleChoiceResponses')
+
+dim(multipleChoiceResponses)
+```
+
+Read the freeformResponses spreadsheet from github, upload it as a table into ds_dkills schema and than read the data from newly created database table and save it in a R dataframe
+
+```{r}
+file_name <-   "freeformResponses"
+file_url <- paste0(github_url,file_name,".csv")
+
+# read file
+ffr_tb = read.csv(file_url)
+
+# Drop table if exists
+MySQLcode <- paste0("DROP TABLE IF EXISTS ",file_name,";",sep="")
+dbSendQuery(sql_conn, MySQLcode)
+
+# load the spreadsheet into database
+dbWriteTable(sql_conn,"freeformResponses",ffr_tb, row.names = FALSE, overwrite = TRUE)
+
+# load the database table into a R dataframe
+freeformResponses <- dbGetQuery(sql_conn, 'SELECT * FROM freeformResponses')
+
+dim(freeformResponses)
+```
+
+Read the conversionRates spreadsheet from github, upload it as a table into ds_dkills schema and than read the data from newly created database table and save it in a R dataframe
+
+```{r}
+file_name <-   "conversionRates"
+file_url <- paste0(github_url,file_name,".csv")
+
+# read file
+cr_tb = read.csv(file_url)
+
+# Drop table if exists
+MySQLcode <- paste0("DROP TABLE IF EXISTS ",file_name,";",sep="")
+dbSendQuery(sql_conn, MySQLcode)
+
+# load the spreadsheet into database
+dbWriteTable(sql_conn,"conversionRates",cr_tb, row.names = FALSE, overwrite = TRUE)
+
+# load the database table into a R dataframe
+conversionRates <- dbGetQuery(sql_conn, 'SELECT * FROM conversionRates')
+
+dim(conversionRates)
+```
